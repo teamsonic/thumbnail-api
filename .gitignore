@@ -1,3 +1,6 @@
 *.swp
+**/**/__pycache__
 .idea
 .venv
+dist
+app/specifications
