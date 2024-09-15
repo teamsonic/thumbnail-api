@@ -9,5 +9,7 @@ class UploadImageAdapter(UploadImage):
     Adapts the specification to the shape of the interaction
     """
 
-    def upload(self, file: BinaryIO) -> dict[str, str]:
-        return upload_image(file)
+    def upload(self, file: BinaryIO) -> str:
+        uuid = upload_image(file)
+        return str(uuid)
+

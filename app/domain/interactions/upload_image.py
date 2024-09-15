@@ -1,12 +1,14 @@
+import uuid
 from typing import BinaryIO
 
 
-def upload_image(image: BinaryIO) -> dict[str, str]:
-    """
-    Given an image, create an asynchronous task to resize the image to a thumbnail
-    and return the id of the job. This id can be used to query the status of the job
+def upload_image(image: BinaryIO) -> uuid.UUID:
+    """Accept image data and launch a task to create a thumbnail of it.
 
-    :param image: File expected to represent data of an image to be resized
-    :return: A dict containing the id of the job
+    The task is performed asynchronously and has an associated id when created.
+    This id is returned and can be used to query the status of the job.
+
+    :param image: BinaryIO file of an image to be resized
+    :return: UUID uniquely identifying the task
     """
-    return {"id": "1234"}
+    return uuid.uuid4()

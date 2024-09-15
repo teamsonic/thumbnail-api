@@ -4,6 +4,7 @@ from typing import BinaryIO
 import requests
 
 from app import settings
+from app.models import UploadImageModel
 from tests.specifications.upload_image import UploadImage
 
 
@@ -15,9 +16,10 @@ class HTTPDriver(UploadImage):
     port = settings.app_port
     base_url = f"http://localhost:{port}"
 
-    def upload(self, file: BinaryIO) -> dict[str, str]:
+    def upload(self, file: BinaryIO) -> str:
         response = requests.post(self.base_url + "/upload_image", files={"file": file})
-        return dict(response.json())
+        data = UploadImageModel(**response.json())
+        return data.serialize_job_id(data.job_id)
 
     @classmethod
     def healthcheck(cls, timeout: int = 30) -> bool:
