@@ -10,7 +10,7 @@ class UploadImage(Protocol):
 
 
 def upload_image_specification(image_uploader: UploadImage) -> None:
-    with open("日本電波塔.jpg", "rb") as f:
+    with open("assets/日本電波塔.jpg", "rb") as f:
         response = image_uploader.upload(f)
         if "id" not in response:
             raise Exception(f"Expected key 'id' not found in {response}")

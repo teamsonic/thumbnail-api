@@ -4,7 +4,7 @@ from _pytest.fixtures import FixtureRequest
 from docker.models.containers import Container
 
 from app import settings
-from app.specifications.adapters.http_driver import HTTPDriver
+from tests.specifications.adapters.http_driver import HTTPDriver
 
 
 @pytest.fixture(scope="session")

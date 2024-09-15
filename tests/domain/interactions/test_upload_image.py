@@ -1,5 +1,5 @@
-from app.specifications.adapters.adapters import UploadImageAdapter
-from app.specifications.upload_image import upload_image_specification
+from tests.specifications.adapters.adapters import UploadImageAdapter
+from tests.specifications.upload_image import upload_image_specification
 
 
 def test_upload_image() -> None:

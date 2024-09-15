@@ -1,8 +1,8 @@
 import pytest
 from docker.models.containers import Container
 
-from app.specifications.adapters.http_driver import HTTPDriver
-from app.specifications.upload_image import upload_image_specification
+from tests.specifications.adapters.http_driver import HTTPDriver
+from tests.specifications.upload_image import upload_image_specification
 
 
 @pytest.mark.slow
