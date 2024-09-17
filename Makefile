@@ -74,8 +74,8 @@ update-poetry: install-poetry
 	@echo "poetry version up to date"
 
 install-dependencies: update-poetry
-	@echo "$(Prefix) Ensuring environment has dependencies installed..."
-	@poetry install --only main,dev --no-root
+	@echo "$(Prefix) Syncing virtual environment with locked dependencies..."
+	@poetry install --only main,dev --no-root --sync
 	@echo "$(Prefix) Done installing dependencies"
 
 format: install-dependencies
@@ -86,25 +86,27 @@ type-check: install-dependencies
 	@echo "$(Prefix) Performing type checking analysis..."
 	@poetry run mypy .
 
-
-build: update-poetry
+build: install-dependencies
 	@echo "$(Prefix) Building application..."
 	@poetry build --format wheel
 
-run: update-poetry
+run: install-dependencies
 	@poetry run fastapi dev $(Entrypoint)
 
-test: update-poetry
+test: install-dependencies
 	@poetry run pytest -m "not slow"
 
-test-long: update-poetry
+test-long: install-dependencies
 	@poetry run pytest -m "slow"
 
-test-acceptance: update-poetry
+test-acceptance: install-dependencies
 	@poetry run pytest -m "acceptance"
 
-test-all: update-poetry
+test-all: install-dependencies
 	@poetry run pytest
+
+coverage: test
+	@open ./htmlcov/index.html
 
 build-docker:
 	docker build -t $(shell poetry version | tr ' ' ':') .

@@ -1,6 +1,6 @@
 import pytest
 
-from app.domain.interactions.upload_image import create_thumbnail
+from app.domain.create_thumbnail import create_thumbnail
 
 
 @pytest.mark.parametrize("image", ["wide_image", "tall_image", "square_image"])

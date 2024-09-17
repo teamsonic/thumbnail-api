@@ -11,6 +11,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "acceptance: marks tests as acceptance tests (deselect with '-m \"not acceptance\"')"
 ]
+addopts = "--cov=app --cov-report html"
 
 [tool.mypy]
 files = ["**/*.py"]
@@ -59,6 +60,7 @@ requests = "^2.32.3"
 types-requests = "^2.32.0.20240914"
 docker = "^7.1.0"
 types-docker = "^7.1.0.20240827"
+pytest-cov = "^5.0.0"
 
 [build-system]
 requires = ["poetry-core"]
