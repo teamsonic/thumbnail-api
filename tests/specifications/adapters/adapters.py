@@ -6,10 +6,10 @@ from tests.specifications.upload_image import UploadImage
 
 class UploadImageAdapter(UploadImage):
     """
-    Adapts the specification to the shape of the interaction
+    Adapts the upload_image specification
+    to the shape of the upload_image interaction
     """
 
     def upload(self, file: BinaryIO) -> str:
         uuid = upload_image(file)
         return str(uuid)
-

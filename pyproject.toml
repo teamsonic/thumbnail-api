@@ -22,6 +22,7 @@ init_forbid_extra = true
 init_typed = true
 
 [tool.ruff.lint]
+extend-select = ["I"]
 select = ["E501", "I"]
 
 [tool.ruff.format]
@@ -48,6 +49,7 @@ uvicorn = "0.30.6"
 uvloop = "0.20.0"
 watchfiles = "0.24.0"
 websockets = "13.0.1"
+pillow = "^10.4.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"

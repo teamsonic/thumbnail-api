@@ -5,6 +5,8 @@ Exports:
 settings - An instance of a data class containing application configuration settings
 """
 
+from typing import Tuple
+
 from pydantic.v1 import BaseSettings
 
 
@@ -17,6 +19,10 @@ class Settings(BaseSettings):
 
     app_name: str = "thumbnail-api"
     app_port: int = 8000
+    max_file_size: int = 1024 * 1024 * 5  # 5MB
+    thumbnail_size: Tuple[int, int] = (100, 100)
+    thumbnail_file_type: str = "JPEG"
+    thumbnail_background: Tuple[int, int, int] = (255, 255, 255)  # White
 
     class Config:
         env_file = ".env"

@@ -4,7 +4,9 @@ See https://docs.pydantic.dev/latest/concepts/models/
 
 Exports:
 
-UploadImageModel - Defines Schema for response to a request to create a thumbnail
+ErrorResponseModel - Defines schema for error responses
+UploadImageModel - Defines schema for response to a request to create a thumbnail
 """
 
+from app.models.error_response import ErrorResponseModel as ErrorResponseModel
 from app.models.upload_image import UploadImageModel as UploadImageModel

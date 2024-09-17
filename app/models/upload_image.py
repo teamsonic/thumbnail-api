@@ -7,11 +7,12 @@ class UploadImageModel(BaseModel):
     """
     Schema for thumbnail creation API requests.
     """
+
     job_id: uuid.UUID
 
-    @field_serializer('job_id')
+    @field_serializer("job_id")
     def serialize_job_id(self, val: uuid.UUID) -> str:
-        """
+        """Coerce the uuid type to a string during serialization.
 
         :param val: The model's job_id value
         :return: The job_id coerced to a string
