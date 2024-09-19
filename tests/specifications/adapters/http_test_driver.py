@@ -9,11 +9,14 @@ from app.srv.models import AllJobs, JobStatusModel, UploadImageModel
 from app.task_queue.task_store import TaskStatus
 from tests.exceptions import ImageTooLarge, InvalidJobID, MissingContentLength
 from tests.specifications.check_job_status import CheckJobStatus
+from tests.specifications.download_thumbnail import ThumbnailDownloader
 from tests.specifications.get_all_job_ids import GetAllJobIds
 from tests.specifications.upload_image import UploadImage
 
+import io
 
-class HTTPTestDriver(UploadImage, GetAllJobIds, CheckJobStatus):
+
+class HTTPTestDriver(UploadImage, GetAllJobIds, CheckJobStatus, ThumbnailDownloader):
     def __init__(self) -> None:
         self.client = TestClient(app)
 
@@ -53,3 +56,14 @@ class HTTPTestDriver(UploadImage, GetAllJobIds, CheckJobStatus):
         data = AllJobs.model_validate(response.json())
 
         return data.job_ids
+
+    def download(self, job_id: str) -> BinaryIO:
+        response = self.client.get(f"/download_thumbnail/{job_id}")
+        status_code = response.status_code
+
+        if status_code == status.HTTP_200_OK:
+            return io.BytesIO(response.content)
+        elif status_code == status.HTTP_404_NOT_FOUND:
+            raise JobNotFound
+
+        raise Exception(f"Unexpected status code: {status_code}")

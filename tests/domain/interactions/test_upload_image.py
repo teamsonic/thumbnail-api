@@ -5,7 +5,7 @@ import pytest
 from app.exceptions import InvalidImage
 from tests.exceptions import ImageTooLarge
 from tests.specifications.adapters.adapters import UploadImageAdapter
-from tests.specifications.adapters.http_test_client import HTTPTestDriver
+from tests.specifications.adapters.http_test_driver import HTTPTestDriver
 from tests.specifications.upload_image import (
     upload_image_specification,
     upload_invalid_image_specification,

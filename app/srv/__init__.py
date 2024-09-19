@@ -14,6 +14,7 @@ from app import settings
 from app.srv.events import lifespan
 from app.srv.handler import (
     check_job_status_handler,
+    download_thumbnail_handler,
     get_all_jobs_handler,
     healthcheck,
     upload_image_handler,
@@ -33,7 +34,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.get("/jobs")(get_all_jobs_handler)
 app.get("/check_job_status/{job_id}")(check_job_status_handler)
-# app.get("/download_thumbnail/{job_id}")
+app.get("/download_thumbnail/{job_id}")(download_thumbnail_handler)
 app.get("/healthcheck")(healthcheck)
 app.post("/upload_image", status_code=status.HTTP_202_ACCEPTED)(upload_image_handler)
 

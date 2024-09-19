@@ -6,5 +6,5 @@
 dist
 htmlcov
 .coverage
-acceptance_test_server_logs
+acceptance_test_artifacts
 task_queue_data

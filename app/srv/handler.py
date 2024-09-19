@@ -7,9 +7,12 @@ See https://fastapi.tiangolo.com/tutorial/dependencies/
 import uuid
 from typing import Any
 
-from fastapi import Request, Response, UploadFile, status
+from fastapi import Request, Response, UploadFile, status, HTTPException
+from fastapi.responses import StreamingResponse
 
+from app import settings
 from app.domain.interactions.check_job_status import check_job_status
+from app.domain.interactions.download_thumbnail import download_thumbnail
 from app.domain.interactions.get_all_job_ids import get_all_job_ids
 from app.domain.interactions.upload_image import upload_image
 from app.exceptions import InvalidImage, JobNotFound
@@ -48,6 +51,19 @@ async def upload_image_handler(
         model = UploadImageModel(job_id=job_id)
 
     return model.model_dump()
+
+
+async def download_thumbnail_handler(job_id: str) -> StreamingResponse:
+    try:
+        thumbnail = download_thumbnail(job_id)
+    except JobNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Completed job with ID {job_id} not found",
+        )
+    return StreamingResponse(
+        thumbnail, media_type=f"image/{settings.thumbnail_file_type}".lower()
+    )
 
 
 async def check_job_status_handler(

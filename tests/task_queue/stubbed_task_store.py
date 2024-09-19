@@ -1,49 +1,40 @@
-import io
 import uuid
-from enum import StrEnum
 from typing import BinaryIO, Iterable
 
+from app.exceptions import JobNotFound
 from app.task_queue.task_store import TaskStatus, TaskStoreBroker
+from tests.conftest import ImageType, JobID
 
 
 class StubbedTaskStoreBroker(TaskStoreBroker):
-    class JobID(StrEnum):
-        """Used to test retrieving job id statuses"""
-
-        COMPLETE = "0c895999-7a69-4770-b116-7eff01a57b99"
-        INCOMPLETE = "1d295999-7a69-4770-b116-7eff01a57b99"
-        ERROR = "3af56290-f0da-420e-b9bb-c748f4a08ca6"
-        NOT_FOUND = "2e395999-7a69-4770-b116-7eff01a57b99"
-        INVALID = "2-7a69-4770-b116-7eff01a57b99"
-
     def add_task_to_queue(self, image: BinaryIO) -> str:
         return str(uuid.uuid4())
 
     def get_task_status(self, job_id: str) -> TaskStatus:
-        if job_id == self.JobID.COMPLETE:
+        if job_id == JobID.COMPLETE:
             return TaskStatus.SUCCEEDED
-        elif job_id == self.JobID.INCOMPLETE:
+        elif job_id == JobID.INCOMPLETE:
             return TaskStatus.PROCESSING
-        elif job_id == self.JobID.ERROR:
+        elif job_id == JobID.ERROR:
             return TaskStatus.ERROR
         else:
             return TaskStatus.NOT_FOUND
 
     def get_all_task_status(self) -> dict[TaskStatus, Iterable[str]]:
         return {
-            TaskStatus.PROCESSING: [self.JobID.INCOMPLETE],
-            TaskStatus.SUCCEEDED: [self.JobID.COMPLETE],
-            TaskStatus.ERROR: [self.JobID.ERROR],
+            TaskStatus.PROCESSING: [JobID.INCOMPLETE],
+            TaskStatus.SUCCEEDED: [JobID.COMPLETE],
+            TaskStatus.ERROR: [JobID.ERROR],
         }
 
     def get_result(self, job_id: str) -> BinaryIO:
-        if job_id == self.JobID.COMPLETE:
-            return io.BytesIO()
+        if job_id == JobID.COMPLETE:
+            return ImageType.THUMBNAIL.get_image()
 
-        raise Exception(f"Unexpected job_id: {job_id}")
+        raise JobNotFound(f"Unexpected job_id: {job_id}")
 
     def get_error(self, job_id: str) -> str:
-        if job_id == self.JobID.ERROR:
+        if job_id == JobID.ERROR:
             return "this job failed because of reasons"
 
         raise Exception(f"Unexpected job_id: {job_id}")

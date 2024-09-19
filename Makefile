@@ -109,7 +109,7 @@ coverage: test
 	@open ./htmlcov/index.html
 
 clean:
-	@rm -fr docker_logs task_queue_data .coverage htmlcov
+	@rm -fr tests/acceptance_test_artifacts task_queue_data .coverage htmlcov
 
 build-docker:
 	docker build -t $(shell poetry version | tr ' ' ':') .

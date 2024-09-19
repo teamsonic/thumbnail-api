@@ -18,7 +18,8 @@ import io
 import subprocess
 import threading
 from enum import StrEnum
-from typing import BinaryIO, Generator
+from pathlib import Path
+from typing import BinaryIO
 
 import docker
 import pytest
@@ -26,24 +27,34 @@ from _pytest.fixtures import FixtureRequest
 from docker.models.containers import Container
 
 from app import settings
-from app.task_queue import broker, task_store
-from app.task_queue.broker import Broker
-from tests.task_queue.stubbed_task_store import StubbedTaskStoreBroker as TSB
+from tests.specifications.adapters.http_client_driver import HTTPClientDriver
 
 _ASSETS_PATH: str
-ACCEPTANCE_TEST_LOGS: str = "acceptance_test_server_logs"
+ACCEPTANCE_TEST_ARTIFACTS_PATH: str
 
 
 def pytest_configure(config: pytest.Config) -> None:
     """Programmatically configure pytest environment just before testing begins.
 
     :param config: Global pytest configuration
-    :return: None
     """
     global _ASSETS_PATH
+    global ACCEPTANCE_TEST_ARTIFACTS_PATH
     _ASSETS_PATH = f"{config.rootpath}/tests/assets"
+    ACCEPTANCE_TEST_ARTIFACTS_PATH = (
+        f"{config.rootpath}/tests/acceptance_test_artifacts"
+    )
+    Path(ACCEPTANCE_TEST_ARTIFACTS_PATH).mkdir(exist_ok=True)
 
-    pytest.register_assert_rewrite("tests.specifications")
+
+class JobID(StrEnum):
+    """Used to test retrieving job id statuses"""
+
+    COMPLETE = "0c895999-7a69-4770-b116-7eff01a57b99"
+    INCOMPLETE = "1d295999-7a69-4770-b116-7eff01a57b99"
+    ERROR = "3af56290-f0da-420e-b9bb-c748f4a08ca6"
+    NOT_FOUND = "2e395999-7a69-4770-b116-7eff01a57b99"
+    INVALID = "2-7a69-4770-b116-7eff01a57b99"
 
 
 class ImageType(StrEnum):
@@ -56,6 +67,7 @@ class ImageType(StrEnum):
     TALL = "日本電波塔より縦.jpg"
     SIZE_TOO_LARGE = "too_large.jpg"
     NOT_AN_IMAGE = "not_an_image.txt"
+    THUMBNAIL = JobID.COMPLETE
 
     def get_image(self) -> BinaryIO:
         with open(f"{_ASSETS_PATH}/{self}", "rb") as f:
@@ -110,49 +122,31 @@ def not_an_image() -> BinaryIO:
 @pytest.fixture
 def job_id_complete() -> str:
     """Provides a job id that corresponds to a job whose status is complete."""
-    return TSB.JobID.COMPLETE
+    return JobID.COMPLETE
 
 
 @pytest.fixture
 def job_id_incomplete() -> str:
     """Provides a job id that corresponds to a job whose status is incomplete."""
-    return TSB.JobID.INCOMPLETE
+    return JobID.INCOMPLETE
 
 
 @pytest.fixture
 def job_id_error() -> str:
     """Provides a job id that corresponds to a job whose status is error."""
-    return TSB.JobID.ERROR
+    return JobID.ERROR
 
 
 @pytest.fixture
 def job_id_not_found() -> str:
     """Provides a job id that does not correspond to a job."""
-    return TSB.JobID.NOT_FOUND
+    return JobID.NOT_FOUND
 
 
 @pytest.fixture
 def job_id_invalid() -> str:
     """Provides an invalid job id. i.e. cannot be parsed as a UUID."""
-    return TSB.JobID.INVALID
-
-
-@pytest.fixture(scope="function")
-def task_broker() -> Generator[Broker, None, None]:
-    """Get the default task_queue broker.
-
-    This fixture just returns the Broker singleton,
-    but more importantly cleans up the leftover files afterward.
-    """
-    task_store.reset()
-    yield broker
-    task_store.reset()
-
-
-@pytest.fixture(scope="session")
-def stubbed_broker() -> Broker:
-    """Use a Broker interacting with a stubbed, stateless TaskStore"""
-    return Broker(TSB())
+    return JobID.INVALID
 
 
 @pytest.fixture(scope="session")
@@ -196,12 +190,10 @@ def app_docker_container(request: FixtureRequest) -> Container:
     request.addfinalizer(container.remove)
     request.addfinalizer(container.stop)
 
-    from tests.specifications.adapters.http_driver import HTTPClientDriver
-
     HTTPClientDriver.healthcheck()
 
     def docker_logging_thread() -> None:
-        with open(ACCEPTANCE_TEST_LOGS, "wb") as f:
+        with open(f"{ACCEPTANCE_TEST_ARTIFACTS_PATH}/logs", "wb") as f:
             for line in container.logs(stream=True):
                 message = b"\n" + line.strip()
                 f.write(message)

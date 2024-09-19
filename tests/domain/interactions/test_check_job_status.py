@@ -3,7 +3,7 @@ import pytest
 from app.exceptions import JobNotFound
 from tests.exceptions import InvalidJobID
 from tests.specifications.adapters.adapters import CheckJobStatusAdapter
-from tests.specifications.adapters.http_test_client import HTTPTestDriver
+from tests.specifications.adapters.http_test_driver import HTTPTestDriver
 from tests.specifications.check_job_status import (
     check_job_status_complete_specification,
     check_job_status_error_specification,
@@ -27,11 +27,12 @@ class TestCheckJobStatus:
 
     def test_check_job_status_not_found(self, job_id_not_found: str) -> None:
         with pytest.raises(JobNotFound):
-            check_job_status_complete_specification(CheckJobStatusAdapter(), job_id_not_found)
+            check_job_status_complete_specification(
+                CheckJobStatusAdapter(), job_id_not_found
+            )
 
 
 class TestCheckJobStatusHTTP:
-
     def test_check_job_status_complete(self, job_id_complete: str) -> None:
         check_job_status_complete_specification(HTTPTestDriver(), job_id_complete)
 
