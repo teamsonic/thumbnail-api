@@ -10,9 +10,10 @@ from typing import Any
 from fastapi import Request, Response, UploadFile, status
 
 from app.domain.interactions.check_job_status import check_job_status
+from app.domain.interactions.get_all_job_ids import get_all_job_ids
 from app.domain.interactions.upload_image import upload_image
 from app.exceptions import InvalidImage, JobNotFound
-from app.srv.models import ErrorResponseModel, JobStatusModel, UploadImageModel
+from app.srv.models import AllJobs, ErrorResponseModel, JobStatusModel, UploadImageModel
 from app.task_queue.task_store import TaskStatus
 
 
@@ -77,3 +78,8 @@ async def check_job_status_handler(
         message = f"{request.base_url}{job_id}"
 
     return JobStatusModel(status=job_status, resource_url=message).model_dump()
+
+
+async def get_all_jobs_handler() -> AllJobs:
+    job_ids = get_all_job_ids()
+    return AllJobs(job_ids=job_ids)

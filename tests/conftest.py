@@ -196,9 +196,9 @@ def app_docker_container(request: FixtureRequest) -> Container:
     request.addfinalizer(container.remove)
     request.addfinalizer(container.stop)
 
-    from tests.specifications.adapters.http_driver import HTTPDriver
+    from tests.specifications.adapters.http_driver import HTTPClientDriver
 
-    HTTPDriver.healthcheck()
+    HTTPClientDriver.healthcheck()
 
     def docker_logging_thread() -> None:
         with open(ACCEPTANCE_TEST_LOGS, "wb") as f:

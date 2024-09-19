@@ -5,23 +5,17 @@ from typing import BinaryIO
 
 import pytest
 from docker.models.containers import Container
+from fastapi import status
 
-from app.exceptions import InvalidImage, JobNotFound
+from app.srv.models import JobStatusModel, UploadImageModel, AllJobs
 from app.task_queue.task_store import TaskStatus
 from tests.conftest import square_image
-from tests.exceptions import ImageTooLarge, InvalidJobID, MissingContentLength
-from tests.specifications.adapters.http_driver import (
-    CheckJobStatusHTTPDriver,
-    UploadImageHTTPDriver,
-)
-from tests.specifications.upload_image import (
-    upload_image_specification,
-    upload_invalid_image_specification,
-)
+from tests.specifications.adapters.http_driver import HTTPClientDriver
 
 
 @pytest.mark.slow
 @pytest.mark.acceptance
+@pytest.mark.e2e
 def test_server(
     app_docker_container: Container,
     square_image: BinaryIO,
@@ -39,36 +33,34 @@ def test_server(
     :param square_image: image of an acceptable size to test happy path
     :param size_too_large_image: image that should be rejected for being too big
     """
-    upload_image_http_driver = UploadImageHTTPDriver()
-    check_job_status_http_driver = CheckJobStatusHTTPDriver()
+    http_client_driver = HTTPClientDriver()
+    response = http_client_driver.do_request("POST", "/upload_image", square_image)
+    assert response.status_code == status.HTTP_202_ACCEPTED
+    upload_model = UploadImageModel.model_validate(response.json())
+    job_id = upload_model.job_id
 
-    # Upload image happy path. Capture the job id
-    job_id = upload_image_specification(upload_image_http_driver)
+    session, prepared = http_client_driver.make_request(
+        "POST", "/upload_image", files={"file": square_image}
+    )
+    del prepared.headers["content-length"]
+    response = session.send(prepared)
+    assert response.status_code == status.HTTP_411_LENGTH_REQUIRED
 
-    # Upload image unhappy paths
-    with pytest.raises(InvalidImage):
-        upload_invalid_image_specification(upload_image_http_driver)
-    with pytest.raises(ImageTooLarge):
-        upload_image_http_driver.upload(size_too_large_image)
-    with pytest.raises(MissingContentLength):
-        upload_image_http_driver.upload_no_content_length(square_image)
-
-    # Check job status happy path.
-    status: TaskStatus = TaskStatus.PROCESSING
-    resource_url: str | None = None
+    task_status: TaskStatus = TaskStatus.PROCESSING
     counter = 0
-    while status != TaskStatus.SUCCEEDED:
-        status, resource_url = check_job_status_http_driver.check_job_status(job_id)
+    while task_status != TaskStatus.SUCCEEDED:
+        response = http_client_driver.do_request("GET", f"/check_job_status/{job_id}")
+        assert response.status_code == status.HTTP_200_OK
+        job_status_model = JobStatusModel.model_validate(response.json())
+        task_status = job_status_model.status
         sleep(1)
         counter += 1
         if counter > 10:
             raise TimeoutError("timed out waiting for job to finish processing")
 
-    # Check job status unhappy paths
-    with pytest.raises(JobNotFound):
-        check_job_status_http_driver.check_job_status(job_id_not_found)
-    with pytest.raises(InvalidJobID):
-        check_job_status_http_driver.check_job_status(job_id_invalid)
-
-    # ViewAllJobsSpecification()
+    response = http_client_driver.do_request("GET", "/jobs")
+    assert response.status_code == status.HTTP_200_OK
+    all_jobs_model = AllJobs.model_validate(response.json())
+    assert len(all_jobs_model.job_ids) == 1
+    assert all_jobs_model.job_ids[0] == job_id
     # DownloadThumbnailSpecification()

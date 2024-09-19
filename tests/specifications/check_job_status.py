@@ -53,7 +53,7 @@ def check_job_status_incomplete_specification(
 def check_job_status_error_specification(
     status_checker: CheckJobStatus, job_id: str
 ) -> None:
-    """Describes the specification of checking a job status whose job is incomplete.
+    """Describes the specification of checking a job that has failed.
 
     This function expresses in code what in natural language would be:
     "When a job status is requested and the job has failed,

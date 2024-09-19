@@ -1,9 +1,11 @@
 from typing import BinaryIO
 
 from app.domain.interactions.check_job_status import check_job_status
+from app.domain.interactions.get_all_job_ids import get_all_job_ids
 from app.domain.interactions.upload_image import upload_image
 from app.task_queue.task_store import TaskStatus
 from tests.specifications.check_job_status import CheckJobStatus
+from tests.specifications.get_all_job_ids import GetAllJobIds
 from tests.specifications.upload_image import UploadImage
 
 
@@ -26,3 +28,8 @@ class CheckJobStatusAdapter(CheckJobStatus):
 
     def check_job_status(self, job_id: str) -> tuple[TaskStatus, str | None]:
         return check_job_status(job_id)
+
+
+class GetAllJobIdsAdapter(GetAllJobIds):
+    def get_all_job_ids(self) -> list[str]:
+        return get_all_job_ids()

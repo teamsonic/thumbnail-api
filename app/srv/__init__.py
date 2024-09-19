@@ -12,7 +12,12 @@ from fastapi import FastAPI, status
 
 from app import settings
 from app.srv.events import lifespan
-from app.srv.handler import check_job_status_handler, healthcheck, upload_image_handler
+from app.srv.handler import (
+    check_job_status_handler,
+    get_all_jobs_handler,
+    healthcheck,
+    upload_image_handler,
+)
 from app.srv.middleware import check_content_length
 from app.srv.worker_monitor import worker_monitor
 
@@ -26,6 +31,7 @@ except Exception as e:
     logger.exception(e)
 app = FastAPI(lifespan=lifespan)
 
+app.get("/jobs")(get_all_jobs_handler)
 app.get("/check_job_status/{job_id}")(check_job_status_handler)
 # app.get("/download_thumbnail/{job_id}")
 app.get("/healthcheck")(healthcheck)

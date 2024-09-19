@@ -12,7 +12,7 @@ class StubbedTaskStoreBroker(TaskStoreBroker):
 
         COMPLETE = "0c895999-7a69-4770-b116-7eff01a57b99"
         INCOMPLETE = "1d295999-7a69-4770-b116-7eff01a57b99"
-        ERROR = "5t895999-7a69-4770-b116-7eff01a57b99"
+        ERROR = "3af56290-f0da-420e-b9bb-c748f4a08ca6"
         NOT_FOUND = "2e395999-7a69-4770-b116-7eff01a57b99"
         INVALID = "2-7a69-4770-b116-7eff01a57b99"
 

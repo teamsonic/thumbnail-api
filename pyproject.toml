@@ -9,7 +9,8 @@ readme = "README.md"
 [tool.pytest.ini_options]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "acceptance: marks tests as acceptance tests (deselect with '-m \"not acceptance\"')"
+    "acceptance: marks tests as acceptance tests (deselect with '-m \"not acceptance\"')",
+    "e2e: marks tests as end-to-end tests (deselect with '-m \"not e2e\"')"
 ]
 addopts = "--cov=app --cov-report html"
 
