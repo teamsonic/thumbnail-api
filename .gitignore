@@ -6,5 +6,5 @@
 dist
 htmlcov
 .coverage
-docker_logs
+acceptance_test_server_logs
 task_queue_data

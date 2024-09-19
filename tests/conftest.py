@@ -31,7 +31,7 @@ from app.task_queue.broker import Broker
 from tests.task_queue.stubbed_task_store import StubbedTaskStoreBroker as TSB
 
 _ASSETS_PATH: str
-DOCKER_LOGS_PATH: str = "docker_logs"
+ACCEPTANCE_TEST_LOGS: str = "acceptance_test_server_logs"
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -183,9 +183,16 @@ def app_docker_container(request: FixtureRequest) -> Container:
     )
     request.addfinalizer(lambda: client.images.get(tag).remove())
 
+    volume_name = f"{settings.app_name}-acceptance-test"
+    volume = client.volumes.get(volume_name)
+    volume.remove(force=True)
     container = client.containers.run(
-        tag, ports={f"{settings.app_port}/tcp": settings.app_port}, detach=True
+        tag,
+        ports={f"{settings.app_port}/tcp": settings.app_port},
+        detach=True,
+        volumes=[f"{volume_name}:/app"],
     )
+
     request.addfinalizer(container.remove)
     request.addfinalizer(container.stop)
 
@@ -194,7 +201,7 @@ def app_docker_container(request: FixtureRequest) -> Container:
     HTTPDriver.healthcheck()
 
     def docker_logging_thread() -> None:
-        with open(DOCKER_LOGS_PATH, "wb") as f:
+        with open(ACCEPTANCE_TEST_LOGS, "wb") as f:
             for line in container.logs(stream=True):
                 message = b"\n" + line.strip()
                 f.write(message)
