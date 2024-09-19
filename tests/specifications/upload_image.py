@@ -6,9 +6,6 @@ image data and receiving a job id in return.
 import uuid
 from typing import BinaryIO, Protocol
 
-import PIL
-import pytest
-
 from tests.conftest import ImageType
 
 
@@ -26,14 +23,14 @@ class UploadImage(Protocol):
     def upload(self, file: BinaryIO) -> str: ...
 
 
-def upload_image_specification(image_uploader: UploadImage) -> None:
+def upload_image_specification(image_uploader: UploadImage) -> str:
     """Describes the specification for uploading an image to become a thumbnail
 
     This function expresses in code what in natural language would be:
     "When an image is uploaded, a UUID job_id is returned"
 
     :param image_uploader: Any object implementing the UploadImage protocol
-    :return: None
+    :return: The job id generated
     :raises: Exception if a UUID was not returned
     """
     response = image_uploader.upload(ImageType.SQUARE.get_image())
@@ -41,6 +38,8 @@ def upload_image_specification(image_uploader: UploadImage) -> None:
         uuid.UUID(response)
     except ValueError:
         raise Exception(f"Expected return to be UUID compliant, but got {response}")
+
+    return response
 
 
 def upload_invalid_image_specification(image_uploader: UploadImage) -> None:

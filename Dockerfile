@@ -24,5 +24,6 @@ WORKDIR /app
 
 COPY --from=build-stage /venv /venv
 COPY ["/app", "/app"]
+COPY [ "log_conf.yaml", "/app/" ]
 
-CMD [ "fastapi", "run", "cmd" ]
+CMD [ "fastapi", "run", "srv" ]

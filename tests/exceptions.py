@@ -20,3 +20,10 @@ class MissingContentLength(Exception):
     Raised when an HTTP request is rejected for not having the
     "content-length" header.
     """
+
+
+class InvalidJobID(Exception):
+    """
+    Raised when an HTTP request is rejected for submitting
+    a job id that is not uuid-compliant to an endpoint
+    """

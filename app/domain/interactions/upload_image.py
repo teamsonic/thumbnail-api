@@ -1,12 +1,12 @@
-import uuid
 from typing import BinaryIO
 
 from PIL import Image, UnidentifiedImageError
 
 from app.exceptions import InvalidImage
+from app.task_queue import broker
 
 
-def upload_image(image: BinaryIO) -> uuid.UUID:
+def upload_image(image: BinaryIO) -> str:
     """Accept image data and launch a task to create a thumbnail of it.
 
     The task is performed asynchronously and has an associated id when created.
@@ -20,4 +20,6 @@ def upload_image(image: BinaryIO) -> uuid.UUID:
         Image.open(image).verify()
     except UnidentifiedImageError as e:
         raise InvalidImage(e)
-    return uuid.uuid4()
+
+    image.seek(0)
+    return broker.add_task(image)

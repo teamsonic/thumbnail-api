@@ -5,7 +5,7 @@ REQUIRED_PIPX_VERSION := 1.7.1
 REQUIRED_POETRY_VERSION := 1.8.3
 
 Prefix = make $@:
-Entrypoint = src/cmd/main.py
+Entrypoint = app/srv
 
 
 check-python-installed:
@@ -107,6 +107,9 @@ test-all: install-dependencies
 
 coverage: test
 	@open ./htmlcov/index.html
+
+clean:
+	@rm -fr docker_logs task_queue_data .coverage htmlcov
 
 build-docker:
 	docker build -t $(shell poetry version | tr ' ' ':') .

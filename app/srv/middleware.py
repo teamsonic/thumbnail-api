@@ -5,7 +5,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app import settings
-from app.models import ErrorResponseModel
+from app.srv.models import ErrorResponseModel
 
 
 async def check_content_length(

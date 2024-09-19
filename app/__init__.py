@@ -19,10 +19,12 @@ class Settings(BaseSettings):
 
     app_name: str = "thumbnail-api"
     app_port: int = 8000
+    log_conf_file: str = "log_conf.yaml"
     max_file_size: int = 1024 * 1024 * 5  # 5MB
     thumbnail_size: Tuple[int, int] = (100, 100)
     thumbnail_file_type: str = "JPEG"
     thumbnail_background: Tuple[int, int, int] = (255, 255, 255)  # White
+    task_queue_data_folder: str = "task_queue_data"
 
     class Config:
         env_file = ".env"

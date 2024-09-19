@@ -16,6 +16,7 @@ for functions not able to use the fixture version.
 
 import io
 import subprocess
+import threading
 from enum import StrEnum
 from typing import BinaryIO, Generator
 
@@ -25,8 +26,12 @@ from _pytest.fixtures import FixtureRequest
 from docker.models.containers import Container
 
 from app import settings
+from app.task_queue import broker, task_store
+from app.task_queue.broker import Broker
+from tests.task_queue.stubbed_task_store import StubbedTaskStoreBroker as TSB
 
 _ASSETS_PATH: str
+DOCKER_LOGS_PATH: str = "docker_logs"
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -38,8 +43,14 @@ def pytest_configure(config: pytest.Config) -> None:
     global _ASSETS_PATH
     _ASSETS_PATH = f"{config.rootpath}/tests/assets"
 
+    pytest.register_assert_rewrite("tests.specifications")
+
 
 class ImageType(StrEnum):
+    """
+    Used to test uploading and creating thumbnails of various types of files
+    """
+
     SQUARE = "日本電波塔.jpg"
     WIDE = "日本電波塔より横.jpg"
     TALL = "日本電波塔より縦.jpg"
@@ -96,6 +107,54 @@ def not_an_image() -> BinaryIO:
     return ImageType.NOT_AN_IMAGE.get_image()
 
 
+@pytest.fixture
+def job_id_complete() -> str:
+    """Provides a job id that corresponds to a job whose status is complete."""
+    return TSB.JobID.COMPLETE
+
+
+@pytest.fixture
+def job_id_incomplete() -> str:
+    """Provides a job id that corresponds to a job whose status is incomplete."""
+    return TSB.JobID.INCOMPLETE
+
+
+@pytest.fixture
+def job_id_error() -> str:
+    """Provides a job id that corresponds to a job whose status is error."""
+    return TSB.JobID.ERROR
+
+
+@pytest.fixture
+def job_id_not_found() -> str:
+    """Provides a job id that does not correspond to a job."""
+    return TSB.JobID.NOT_FOUND
+
+
+@pytest.fixture
+def job_id_invalid() -> str:
+    """Provides an invalid job id. i.e. cannot be parsed as a UUID."""
+    return TSB.JobID.INVALID
+
+
+@pytest.fixture(scope="function")
+def task_broker() -> Generator[Broker, None, None]:
+    """Get the default task_queue broker.
+
+    This fixture just returns the Broker singleton,
+    but more importantly cleans up the leftover files afterward.
+    """
+    task_store.reset()
+    yield broker
+    task_store.reset()
+
+
+@pytest.fixture(scope="session")
+def stubbed_broker() -> Broker:
+    """Use a Broker interacting with a stubbed, stateless TaskStore"""
+    return Broker(TSB())
+
+
 @pytest.fixture(scope="session")
 def app_docker_container(request: FixtureRequest) -> Container:
     """Return a running docker container hosting this application
@@ -104,6 +163,7 @@ def app_docker_container(request: FixtureRequest) -> Container:
     waiting until it is accepting requests before returning.
 
     Multiple test functions requesting this fixture will receive the same instance.
+    Logs are piped and written out to a file which can be examined after testing.
 
     :param request: A pytest.FixtureRequest instance used for cleanup
     :return: A running Container
@@ -132,5 +192,14 @@ def app_docker_container(request: FixtureRequest) -> Container:
     from tests.specifications.adapters.http_driver import HTTPDriver
 
     HTTPDriver.healthcheck()
+
+    def docker_logging_thread() -> None:
+        with open(DOCKER_LOGS_PATH, "wb") as f:
+            for line in container.logs(stream=True):
+                message = b"\n" + line.strip()
+                f.write(message)
+
+    thread = threading.Thread(target=docker_logging_thread)
+    thread.start()
 
     return container
