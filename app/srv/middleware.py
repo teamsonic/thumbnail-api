@@ -1,11 +1,8 @@
 from typing import Awaitable, Callable
 
-from starlette import status
-from starlette.requests import Request
-from starlette.responses import Response
-
+from fastapi import HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse
 from app import settings
-from app.srv.models import ErrorResponseModel
 
 
 async def check_content_length(
@@ -21,20 +18,14 @@ async def check_content_length(
     if request.method in ["POST", "PUT"]:
         content_length = request.headers.get("content-length")
         if not content_length:
-            return _return_content_length_error(
-                "Missing required header 'Content-Length'",
-                status.HTTP_411_LENGTH_REQUIRED,
+            return JSONResponse(
+                status_code=status.HTTP_411_LENGTH_REQUIRED,
+                content={"detail": "Content-Length header missing"},
             )
         elif int(content_length) > settings.max_file_size:
-            return _return_content_length_error(
-                "File size larger than maximum limit of 5MB",
+            return JSONResponse(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                content={"detail": "File size larger than maximum limit of 5MB"},
             )
     response = await call_next(request)
-    return response
-
-
-def _return_content_length_error(error_msg: str, status_code: int) -> Response:
-    error = ErrorResponseModel(error=error_msg, status_code=status_code)
-    response = Response(status_code=status_code, content=error.model_dump_json())
     return response

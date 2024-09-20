@@ -105,8 +105,9 @@ test-acceptance: install-dependencies
 test-all: install-dependencies
 	@poetry run pytest
 
-coverage: test
-	@open ./htmlcov/index.html
+pre-commit: format type-check
+
+pre-commit-test: test-all pre-commit
 
 clean:
 	@rm -fr tests/acceptance_test_artifacts task_queue_data .coverage htmlcov

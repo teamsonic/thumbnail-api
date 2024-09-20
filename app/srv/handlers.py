@@ -7,7 +7,7 @@ See https://fastapi.tiangolo.com/tutorial/dependencies/
 import uuid
 from typing import Any
 
-from fastapi import Request, Response, UploadFile, status, HTTPException
+from fastapi import HTTPException, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 
 from app import settings
@@ -16,7 +16,8 @@ from app.domain.interactions.download_thumbnail import download_thumbnail
 from app.domain.interactions.get_all_job_ids import get_all_job_ids
 from app.domain.interactions.upload_image import upload_image
 from app.exceptions import InvalidImage, JobNotFound
-from app.srv.models import AllJobs, ErrorResponseModel, JobStatusModel, UploadImageModel
+from app.srv.models import AllJobs, JobStatusModel, UploadImageModel
+from app.srv.routes import Routes
 from app.task_queue.task_store import TaskStatus
 
 
@@ -31,26 +32,24 @@ async def healthcheck() -> dict[str, str]:
 async def upload_image_handler(
     file: UploadFile, response: Response
 ) -> dict[str, str | int]:
-    """Handles requests to convert an image to a thumbnail
+    """Handles requests to convert an image to a thumbnail.
 
     :param file: The uploaded file
     :param response: The response object
     :return: An UploadImageModel with the job_id of the asynchronous thumbnail
-    conversion job or an ErrorResponseModel
+        conversion job. The Location response header will be the URL of the
+        job status.
     """
-    model: ErrorResponseModel | UploadImageModel
-
     try:
         job_id = upload_image(file.file)
     except InvalidImage:
-        response.status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
-        model = ErrorResponseModel(
-            error="Unsupported file type", status_code=response.status_code
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Unsupported file type",
         )
-    else:
-        model = UploadImageModel(job_id=job_id)
 
-    return model.model_dump()
+    response.headers["Location"] = Routes.CHECK_JOB_STATUS.format(job_id=job_id)
+    return UploadImageModel(job_id=job_id).model_dump()
 
 
 async def download_thumbnail_handler(job_id: str) -> StreamingResponse:
@@ -69,29 +68,25 @@ async def download_thumbnail_handler(job_id: str) -> StreamingResponse:
 async def check_job_status_handler(
     job_id: str, request: Request, response: Response
 ) -> dict[Any, Any]:
-    model: ErrorResponseModel | JobStatusModel
-
     try:
         uuid.UUID(job_id)
     except ValueError:
-        model = ErrorResponseModel(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            error="job_id must be uuid-compliant",
+            detail="job_id must be uuid-compliant",
         )
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return model.model_dump()
 
     try:
         job_status, message = check_job_status(job_id)
     except JobNotFound:
-        model = ErrorResponseModel(
-            status_code=status.HTTP_404_NOT_FOUND, error="job not found"
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="job not found"
         )
-        response.status_code = status.HTTP_404_NOT_FOUND
-        return model.model_dump()
 
     if job_status == TaskStatus.SUCCEEDED:
         message = f"{request.base_url}{job_id}"
+        response.headers["Location"] = Routes.DOWNLOAD_THUMBNAIL.format(job_id=job_id)
+        response.status_code = status.HTTP_303_SEE_OTHER
 
     return JobStatusModel(status=job_status, resource_url=message).model_dump()
 
