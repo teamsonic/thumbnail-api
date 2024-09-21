@@ -3,6 +3,7 @@
 Exports:
 
 InvalidImage - Raised when a provided file is not an image type
+JobNotFound - Raised when a requested job is not found
 """
 
 

@@ -1,3 +1,5 @@
+"""Assert behavior for uploading an image"""
+
 from typing import BinaryIO
 
 import pytest
@@ -13,23 +15,25 @@ from tests.specifications.upload_image import (
 
 
 class TestUploadImage:
+    """
+    Drive the specification for "uploading" a file directly
+    without any interface. Unit tests.
+    """
+
     def test_upload_image(self) -> None:
-        """
-        Execute the upload image interaction
-        to assert that the behavior matches the specification
-        """
         upload_image_specification(UploadImageAdapter())
 
     def test_upload_invalid_image(self) -> None:
-        """
-        Execute the upload invalid image interaction
-        and verify a InvalidImage is raised
-        """
         with pytest.raises(InvalidImage):
             upload_invalid_image_specification(UploadImageAdapter())
 
 
 class TestUploadImageHTTP:
+    """
+    Drive the specification for uploading a file
+    via an HTTP interface.
+    """
+
     def test_upload_image_http(self) -> None:
         upload_image_specification(HTTPTestDriver())
 

@@ -1,7 +1,8 @@
 from typing import Awaitable, Callable
 
-from fastapi import HTTPException, Request, Response, status
+from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
+
 from app import settings
 
 
@@ -10,10 +11,16 @@ async def check_content_length(
 ) -> Response:
     """App middleware to check the Content-Length header.
 
+    If the Content-Length header is not present, a 411
+    status code is returned. If the content is larger than the
+    maximum allowed size as defined by the application, a 413
+    status code is returned.
+
     :param request: incoming fastapi Request object
     :param call_next: Next middleware function in the chain to forward the request to
     :return: An error response if the content-length header is missing or exceeds
-    the maximum allowed length, or the response returned from the next middleware otherwise.
+        the maximum allowed length, or the response returned from the next middleware
+        otherwise.
     """
     if request.method in ["POST", "PUT"]:
         content_length = request.headers.get("content-length")

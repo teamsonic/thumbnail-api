@@ -4,21 +4,20 @@ FastAPI performs dependency injection based on the handler's function signature.
 See https://fastapi.tiangolo.com/tutorial/dependencies/
 """
 
-import uuid
-from typing import Any
-
 from fastapi import HTTPException, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 
 from app import settings
-from app.domain.interactions.check_job_status import check_job_status
-from app.domain.interactions.download_thumbnail import download_thumbnail
-from app.domain.interactions.get_all_job_ids import get_all_job_ids
-from app.domain.interactions.upload_image import upload_image
+from app.domain import (
+    check_job_status,
+    download_thumbnail,
+    get_all_job_ids,
+    upload_image,
+)
 from app.exceptions import InvalidImage, JobNotFound
-from app.srv.models import AllJobs, JobStatusModel, UploadImageModel
+from app.srv.models import AllJobsModel, JobStatusModel, UploadImageModel
 from app.srv.routes import Routes
-from app.task_queue.task_store import TaskStatus
+from app.task_queue import TaskStatus
 
 
 async def healthcheck() -> dict[str, str]:
@@ -31,7 +30,7 @@ async def healthcheck() -> dict[str, str]:
 
 async def upload_image_handler(
     file: UploadFile, response: Response
-) -> dict[str, str | int]:
+) -> UploadImageModel:
     """Handles requests to convert an image to a thumbnail.
 
     :param file: The uploaded file
@@ -49,10 +48,15 @@ async def upload_image_handler(
         )
 
     response.headers["Location"] = Routes.CHECK_JOB_STATUS.format(job_id=job_id)
-    return UploadImageModel(job_id=job_id).model_dump()
+    return UploadImageModel(job_id=job_id)
 
 
 async def download_thumbnail_handler(job_id: str) -> StreamingResponse:
+    """Handles request to download the thumbnail associated with a job id.
+
+    :param job_id:
+    :return: Byte stream of thumbnail image data
+    """
     try:
         thumbnail = download_thumbnail(job_id)
     except JobNotFound:
@@ -67,15 +71,18 @@ async def download_thumbnail_handler(job_id: str) -> StreamingResponse:
 
 async def check_job_status_handler(
     job_id: str, request: Request, response: Response
-) -> dict[Any, Any]:
-    try:
-        uuid.UUID(job_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="job_id must be uuid-compliant",
-        )
+) -> JobStatusModel:
+    """Check the status of a previously-submitted job.
 
+    If the job has finished successfully, the client will
+    be sent a 303 status code with the location of the
+    resource in the Location header.
+
+    :param job_id: The ID of the job to check
+    :param request: The Request object
+    :param response: The Response object
+    :return: A JobStatusModel with the status of the job
+    """
     try:
         job_status, message = check_job_status(job_id)
     except JobNotFound:
@@ -88,9 +95,13 @@ async def check_job_status_handler(
         response.headers["Location"] = Routes.DOWNLOAD_THUMBNAIL.format(job_id=job_id)
         response.status_code = status.HTTP_303_SEE_OTHER
 
-    return JobStatusModel(status=job_status, resource_url=message).model_dump()
+    return JobStatusModel(status=job_status, resource_url=message)
 
 
-async def get_all_jobs_handler() -> AllJobs:
+async def get_all_jobs_handler() -> AllJobsModel:
+    """Return all job ids, regardless of status.
+
+    :return: An AllJobsModel instance which contains the job ids
+    """
     job_ids = get_all_job_ids()
-    return AllJobs(job_ids=job_ids)
+    return AllJobsModel(job_ids=job_ids)

@@ -1,16 +1,15 @@
+"""Specifications for what should happen when a job status is checked."""
+
 from typing import Protocol
 
-from app.task_queue.task_store import TaskStatus
+from app.task_queue import TaskStatus
 
 
 class CheckJobStatus(Protocol):
     """
     A protocol describing the interface for checking the job status.
 
-    Methods
-    -------
-    check_job_status(job_id: str) -> bool
-        Returns True if the job associated with the job_id is done
+    "Send a job_id, get its status and an optional message"
     """
 
     def check_job_status(self, job_id: str) -> tuple[TaskStatus, str | None]: ...
@@ -21,7 +20,6 @@ def check_job_status_complete_specification(
 ) -> None:
     """Describes the specification of checking a job status whose job is finished.
 
-    This function expresses in code what in natural language would be:
     "When a job status is requested and the job is complete,
     the caller receives the completed status and no message"
 
@@ -38,7 +36,6 @@ def check_job_status_incomplete_specification(
 ) -> None:
     """Describes the specification of checking a job status whose job is incomplete.
 
-    This function expresses in code what in natural language would be:
     "When a job status is requested and the job is incomplete,
     the caller receives the processing status and no message."
 
@@ -55,7 +52,6 @@ def check_job_status_error_specification(
 ) -> None:
     """Describes the specification of checking a job that has failed.
 
-    This function expresses in code what in natural language would be:
     "When a job status is requested and the job has failed,
     the caller receives the error status and an error message."
 

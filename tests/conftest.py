@@ -1,17 +1,6 @@
-"""Module containing global pytest fixtures
+"""Module containing global pytest fixtures and configuration
 
 See https://docs.pytest.org/en/stable/reference/fixtures.html
-
-Fixtures:
-
-app_docker_container: Docker Container running the thumbnail-api
-wide_image: File object of a wide image, which is wider than it is tall.
-tall_image: File object of a tall image, which is taller than it is wide.
-
-Other Exports:
-
-get_wide_image: Function retuning the resolved value of the wide_image fixture
-for functions not able to use the fixture version.
 """
 
 import io

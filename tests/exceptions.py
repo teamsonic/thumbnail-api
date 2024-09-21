@@ -1,7 +1,7 @@
 """Custom Exceptions for test cases
 
 ImageTooLarge - Raised when an uploaded file exceeds the maximum
-acceptable Content-Length and a 413 Status Code is returned
+acceptable Content-Length and a 413 Status Code is returned.
 
 MissingContentLength - Raised when an uploaded file's request
 is missing a content-length header and a 411 Status Code is
@@ -19,11 +19,4 @@ class MissingContentLength(Exception):
     """
     Raised when an HTTP request is rejected for not having the
     "content-length" header.
-    """
-
-
-class InvalidJobID(Exception):
-    """
-    Raised when an HTTP request is rejected for submitting
-    a job id that is not uuid-compliant to an endpoint
     """

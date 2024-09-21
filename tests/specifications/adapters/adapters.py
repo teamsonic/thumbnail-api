@@ -1,10 +1,12 @@
 from typing import BinaryIO
 
-from app.domain.interactions.check_job_status import check_job_status
-from app.domain.interactions.download_thumbnail import download_thumbnail
-from app.domain.interactions.get_all_job_ids import get_all_job_ids
-from app.domain.interactions.upload_image import upload_image
-from app.task_queue.task_store import TaskStatus
+from app.domain import (
+    check_job_status,
+    download_thumbnail,
+    get_all_job_ids,
+    upload_image,
+)
+from app.task_queue import TaskStatus
 from tests.specifications.check_job_status import CheckJobStatus
 from tests.specifications.download_thumbnail import ThumbnailDownloader
 from tests.specifications.get_all_job_ids import GetAllJobIds
@@ -33,10 +35,20 @@ class CheckJobStatusAdapter(CheckJobStatus):
 
 
 class GetAllJobIdsAdapter(GetAllJobIds):
+    """
+    Adapts the get_all_job_ids specification
+    to the shape of the get_all_job_ids interaction
+    """
+
     def get_all_job_ids(self) -> list[str]:
         return get_all_job_ids()
 
 
 class ThumbnailDownloaderAdapter(ThumbnailDownloader):
+    """
+    Adapts the download_thumbnail specification
+    to the shape of the download_thumbnail interaction
+    """
+
     def download(self, job_id: str) -> BinaryIO:
         return download_thumbnail(job_id)

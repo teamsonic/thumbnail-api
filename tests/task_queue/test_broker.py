@@ -2,13 +2,11 @@ import uuid
 from typing import BinaryIO
 
 import pytest
-from _pytest.fixtures import FixtureRequest
+from pytest import FixtureRequest
 
+from app.domain import create_thumbnail
 from app.exceptions import JobNotFound
-from app.task_queue import task_store
-from app.task_queue.broker import Broker
-from app.task_queue.task_store import TaskStatus
-from app.task_queue.worker import Worker
+from app.task_queue import Broker, TaskStatus, Worker, task_store
 
 
 def test_broker_worker_interactions(
@@ -22,7 +20,7 @@ def test_broker_worker_interactions(
     """
     request.addfinalizer(lambda: task_store.reset())
     broker = Broker(task_store)
-    worker = Worker(task_store)
+    worker = Worker(task_store, create_thumbnail)
 
     # assert the worker has no tasks
     assert not worker._get_task()

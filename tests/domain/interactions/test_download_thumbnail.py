@@ -1,3 +1,5 @@
+"""Assert behavior of downloading a thumbnail."""
+
 import pytest
 
 from app.exceptions import JobNotFound
@@ -6,11 +8,22 @@ from tests.specifications.adapters.http_test_driver import HTTPTestDriver
 from tests.specifications.download_thumbnail import download_thumbnail_specification
 
 
-def test_download_thumbnail(job_id_complete: str) -> None:
-    download_thumbnail_specification(ThumbnailDownloaderAdapter(), job_id_complete)
+class TestDownloadThumbnail:
+    """
+    Drive the specification for "downloading" a thumbnail directly
+    without any interface. Unit tests.
+    """
+
+    def test_download_thumbnail(self, job_id_complete: str) -> None:
+        download_thumbnail_specification(ThumbnailDownloaderAdapter(), job_id_complete)
 
 
 class TestDownloadThumbnailHTTP:
+    """
+    Drive the specification for checking job status
+    via an HTTP interface.
+    """
+
     def test_download_thumbnail(self, job_id_complete: str) -> None:
         download_thumbnail_specification(HTTPTestDriver(), job_id_complete)
 

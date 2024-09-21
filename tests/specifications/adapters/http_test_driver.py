@@ -5,11 +5,9 @@ from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.exceptions import InvalidImage, JobNotFound
-from app.srv import app
-from app.srv.models import AllJobs, JobStatusModel, UploadImageModel
-from app.srv.routes import Routes
-from app.task_queue.task_store import TaskStatus
-from tests.exceptions import ImageTooLarge, InvalidJobID, MissingContentLength
+from app.srv import AllJobsModel, JobStatusModel, Routes, UploadImageModel, app
+from app.task_queue import TaskStatus
+from tests.exceptions import ImageTooLarge, MissingContentLength
 from tests.specifications.check_job_status import CheckJobStatus
 from tests.specifications.download_thumbnail import ThumbnailDownloader
 from tests.specifications.get_all_job_ids import GetAllJobIds
@@ -17,6 +15,14 @@ from tests.specifications.upload_image import UploadImage
 
 
 class HTTPTestDriver(UploadImage, GetAllJobIds, CheckJobStatus, ThumbnailDownloader):
+    """
+    Simulate HTTP requests with a FastAPI test client. Great for asserting the
+    behavior of the application's HTTP interface without needing a running server.
+
+    Specifications will utilize this class to drive application
+    behavior assertions when done via HTTP.
+    """
+
     def __init__(self) -> None:
         self.client = TestClient(app)
 
@@ -52,8 +58,6 @@ class HTTPTestDriver(UploadImage, GetAllJobIds, CheckJobStatus, ThumbnailDownloa
                     job_id=job_id
                 )
             return data.status, data.resource_url
-        elif status_code == status.HTTP_400_BAD_REQUEST:
-            raise InvalidJobID
         elif status_code == status.HTTP_404_NOT_FOUND:
             raise JobNotFound
 
@@ -62,7 +66,7 @@ class HTTPTestDriver(UploadImage, GetAllJobIds, CheckJobStatus, ThumbnailDownloa
     def get_all_job_ids(self) -> list[str]:
         response = self.client.get(Routes.JOBS)
         assert response.status_code == status.HTTP_200_OK
-        data = AllJobs.model_validate(response.json())
+        data = AllJobsModel.model_validate(response.json())
 
         return data.job_ids
 

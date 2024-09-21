@@ -1,6 +1,5 @@
 from app.exceptions import JobNotFound
-from app.task_queue import broker
-from app.task_queue.task_store import TaskStatus
+from app.task_queue import TaskStatus, get_broker
 
 
 def check_job_status(job_id: str) -> tuple[TaskStatus, str | None]:
@@ -9,9 +8,10 @@ def check_job_status(job_id: str) -> tuple[TaskStatus, str | None]:
     Along with the TaskStatus, if the job failed, any error message
     associated with the failure that should be displayed to the uploader is returned.
 
-    :param job_id: The uuid of the job
+    :param job_id: The job's ID, as returned from the Broker
     :return: tuple of TaskStatus and associated error message, if any
     """
+    broker = get_broker()
     task_status = broker.task_status(job_id)
     message = None
 

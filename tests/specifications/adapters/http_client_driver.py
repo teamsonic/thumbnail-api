@@ -1,16 +1,4 @@
-"""Module containing logic to drive testing via HTTP.
-
-HTTPDriver subclasses in this module use a combination of HTTP
-and specification protocols to assert that the specifications
-hold via an HTTP interface.
-
-Exports:
-
-HTTPDriver - Base class for HTTP test-driving
-UploadImageHTTPDriver - HTTP driver to assert behavior around uploading images
-CheckJobStatusHTTPDriver - HTTP driver to assert behavior around checking the
-job status of image -> thumbnail conversion
-"""
+"""Module containing logic to drive testing via HTTP."""
 
 from time import sleep
 from typing import Any, BinaryIO
@@ -22,9 +10,11 @@ from app import settings
 
 
 class HTTPClientDriver:
-    """Base HTTPDriver class that all others inherit from
+    """
+    This class is mostly just a wrapper around the requests package, conveniently
+    setting things like the port and base_url that all requests will need.
 
-    Contains the fundamental logic to make HTTP requests to the server.
+    Unlike HTTPTestDriver, this really does make HTTP requests. Great for acceptance tests.
     """
 
     port = settings.app_port
@@ -33,6 +23,13 @@ class HTTPClientDriver:
     def make_request(
         self, method: str, path: str, **kwargs: dict[str, Any]
     ) -> tuple[requests.Session, requests.PreparedRequest]:
+        """
+        Prepare a request, but don't send it. Return it instead.
+
+        Makes it possible to remove some headers that are automatically
+        set by the requests package after they have been set, but
+        before the request is made.
+        """
         session = requests.session()
         request = requests.Request(method, f"{self.base_url}{path}", **kwargs)
         prepared = request.prepare()
@@ -41,6 +38,9 @@ class HTTPClientDriver:
     def do_request(
         self, method: str, path: str, file: BinaryIO | None = None
     ) -> Response:
+        """
+        Do a request, get a response
+        """
         kwargs = {}
         if file:
             kwargs["files"] = {"file": file}

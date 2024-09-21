@@ -7,6 +7,10 @@ from tests.conftest import ImageType, JobID
 
 
 class StubbedTaskStoreBroker(TaskStoreBroker):
+    """
+    Stub class with stubbed responses to the broker.
+    """
+
     def add_task_to_queue(self, image: BinaryIO) -> str:
         return str(uuid.uuid4())
 

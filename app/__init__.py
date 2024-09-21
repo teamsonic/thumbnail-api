@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     thumbnail_size: Tuple[int, int] = (100, 100)
     thumbnail_file_type: str = "JPEG"
     thumbnail_background: Tuple[int, int, int] = (255, 255, 255)  # White
+    # Folder where task state is stored if using FileSystemTaskStore
     task_queue_data_folder: str = "task_queue_data"
 
     class Config:
@@ -31,3 +32,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+if settings.thumbnail_size[0] != settings.thumbnail_size[1]:
+    raise Exception("Only square thumbnails are supported")

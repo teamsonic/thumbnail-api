@@ -13,11 +13,7 @@ class UploadImage(Protocol):
     """
     A protocol describing the interface for uploading an image.
 
-    Methods
-    -------
-    upload(file: BinaryIO) -> str
-        Accepts a file for thumbnail processing and returns the job id
-        as a string compliant with UUID specification.
+    "Send image binary data, get a job id in return"
     """
 
     def upload(self, file: BinaryIO) -> str: ...
@@ -26,8 +22,7 @@ class UploadImage(Protocol):
 def upload_image_specification(image_uploader: UploadImage) -> str:
     """Describes the specification for uploading an image to become a thumbnail
 
-    This function expresses in code what in natural language would be:
-    "When an image is uploaded, a UUID job_id is returned"
+    "When an image is uploaded, an uuid-compliant job_id is returned"
 
     :param image_uploader: Any object implementing the UploadImage protocol
     :return: The job id generated
@@ -45,7 +40,6 @@ def upload_image_specification(image_uploader: UploadImage) -> str:
 def upload_invalid_image_specification(image_uploader: UploadImage) -> None:
     """Describes the specification for uploading a file that is not an image
 
-    This function expresses in code what in natural language would be:
     "When an invalid file type is uploaded, an error should be returned"
 
     How the error is formed depends on the driver of the specification.
@@ -53,6 +47,5 @@ def upload_invalid_image_specification(image_uploader: UploadImage) -> None:
     the drivers to perform further assertions downstream.
 
     :param image_uploader: Any object implementing the UploadImage protocol
-    :return: None
     """
     image_uploader.upload(ImageType.NOT_AN_IMAGE.get_image())

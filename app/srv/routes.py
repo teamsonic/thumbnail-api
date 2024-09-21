@@ -1,3 +1,9 @@
+"""Application routes.
+
+Centralizing the routes helps preserve consistency across
+the application and its tests even as URLs are updated.
+"""
+
 from enum import StrEnum
 
 

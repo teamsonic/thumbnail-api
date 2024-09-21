@@ -1,4 +1,6 @@
 APPLICATION_NAME := thumbnail-api
+APPLICATION_VERSION ?= 0.1.0
+DOCKER_IMAGE_TAG ?= ${APPLICATION_NAME}:${APPLICATION_VERSION}
 PYTHON_COMMAND := python3
 REQUIRED_PYTHON_VERSION := 3.12.6
 REQUIRED_PIPX_VERSION := 1.7.1
@@ -6,6 +8,36 @@ REQUIRED_POETRY_VERSION := 1.8.3
 
 Prefix = make $@:
 Entrypoint = app/srv
+
+run: install-dependencies
+	poetry run fastapi dev $(Entrypoint)
+
+test: install-dependencies
+	poetry run pytest -m "not slow" $(loc)
+
+test-all: install-dependencies
+	poetry run pytest
+
+format: install-dependencies
+	@echo "$(Prefix) Formatting files..."
+	poetry run ruff format .
+
+type-check: install-dependencies
+	@echo "$(Prefix) Performing type checking analysis..."
+	poetry run mypy .
+
+pre-commit: format type-check
+
+build-docker:
+	docker build -t ${DOCKER_IMAGE_TAG} .
+	# docker build -t $(shell poetry version | tr ' ' ':') .
+
+deploy: build-docker
+	kind load docker-image ${APPLICATION_NAME}:${APPLICATION_VERSION}
+	helm upgrade --install ${APPLICATION_NAME} helm-chart
+
+clean:
+	rm -fr tests/acceptance_test_artifacts task_queue_data .coverage htmlcov
 
 
 check-python-installed:
@@ -75,56 +107,6 @@ update-poetry: install-poetry
 
 install-dependencies: update-poetry
 	@echo "$(Prefix) Syncing virtual environment with locked dependencies..."
-	@poetry install --only main,dev --no-root --sync
+	poetry install --only main,dev --no-root --sync
 	@echo "$(Prefix) Done installing dependencies"
 
-format: install-dependencies
-	@echo "$(Prefix) Formatting files..."
-	@poetry run ruff format .
-
-type-check: install-dependencies
-	@echo "$(Prefix) Performing type checking analysis..."
-	@poetry run mypy .
-
-build: install-dependencies
-	@echo "$(Prefix) Building application..."
-	@poetry build --format wheel
-
-run: install-dependencies
-	@poetry run fastapi dev $(Entrypoint)
-
-test: install-dependencies
-	@poetry run pytest -m "not slow"
-
-test-long: install-dependencies
-	@poetry run pytest -m "slow"
-
-test-acceptance: install-dependencies
-	@poetry run pytest -m "acceptance"
-
-test-all: install-dependencies
-	@poetry run pytest
-
-pre-commit: format type-check
-
-pre-commit-test: test-all pre-commit
-
-clean:
-	@rm -fr tests/acceptance_test_artifacts task_queue_data .coverage htmlcov
-
-build-docker:
-	docker build -t $(shell poetry version | tr ' ' ':') .
-	# Ensure docker is installed
-	# Build a new docker image if one does not exist or if application code has been updated
-
-build-chart:
-	# Build a chart archive if one does not exist or if chart has been updated
-
-kind:
-	# Ensure kind cluster is up
-
-deploy:
-	# Ensure docker image has been built
-	# Ensure chart archive has been built
-	# Ensure kind cluster can be connected to
-	# Install Helm chart
