@@ -35,7 +35,7 @@ Maintainer: Josh Burns (josh.burns65@gmail.com)
 
 ### Clone the repository:
 ```bash
-git clone git@github.com:teamsonic/thumbnail-api.git
+git clone https://github.com/teamsonic/thumbnail-api.git
 ```
 
 ### Install Dependencies
