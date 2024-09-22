@@ -19,7 +19,7 @@ Maintainer: Josh Burns (josh.burns65@gmail.com)
 - [FastAPI](https://fastapi.tiangolo.com/) High-performance, easy-to-use web framework
 - [Pydantic](https://docs.pydantic.dev/latest/) Data validation library
 - [Poetry](https://python-poetry.org/) Python package and dependency manager enabling deterministic builds and development environment
-- ~~[Celery](https://docs.celeryq.dev/en/stable/getting-started/introduction.html) A task queue to distribute work~~ This application actually runs a homebrew task queue distributing work across threads
+- ~~[Celery](https://docs.celeryq.dev/en/stable/getting-started/introduction.html) A task queue to distribute work~~ This application actually runs a homebrew task queue distributing work across threads to keep the architecture simple.
 - [Pytest](https://docs.pytest.org/en/stable/) Python testing framework
 - [Mypy](https://mypy.readthedocs.io/en/stable/index.html) Static type checker
 - [Ruff](https://docs.astral.sh/ruff/) Lightning-fast Python linter and code formatter
