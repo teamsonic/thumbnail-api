@@ -56,7 +56,7 @@ class TaskStoreWorker(Protocol):
         self, job_id: str, thumbnail: Image.Image, image_format: str
     ) -> None: ...
 
-    def register_task_error(self, job_id: str, error: Exception) -> None: ...
+    def register_task_error(self, job_id: str, error_msg: str) -> None: ...
 
 
 class FileSystemTaskStore(TaskStoreBroker, TaskStoreWorker):
@@ -265,11 +265,12 @@ class FileSystemTaskStore(TaskStoreBroker, TaskStoreWorker):
         thumbnail_path = self._out_job_path(job_id)
         thumbnail.save(thumbnail_path, format=image_format)
 
-    def register_task_error(self, job_id: str, error: Exception) -> None:
+    def register_task_error(self, job_id: str, error_msg: str) -> None:
         """Register the error message from a failed task.
 
         :param job_id: ID uniquely identifying a task.
-        :param error: The error that occurred during thumbnail generation.
+        :param error_msg: The error details that occurred during thumbnail generation.
+            This will be returned to the user.
         """
         error_path = self._error_job_path(job_id)
-        error_path.write_text(str(error), "utf-8")
+        error_path.write_text(error_msg, "utf-8")

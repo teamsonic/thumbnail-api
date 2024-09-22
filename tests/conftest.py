@@ -55,6 +55,8 @@ class ImageType(StrEnum):
     SQUARE = "日本電波塔.jpg"
     WIDE = "日本電波塔より横.jpg"
     TALL = "日本電波塔より縦.jpg"
+    WEBP = "日本電波塔.webp"
+    PNG = "日本電波塔.png"
     SIZE_TOO_LARGE = "too_large.jpg"
     NOT_AN_IMAGE = "not_an_image.txt"
     THUMBNAIL = JobID.COMPLETE
@@ -89,6 +91,24 @@ def tall_image() -> BinaryIO:
     :return: A file object that is safe to mutate.
     """
     return ImageType.TALL.get_image()
+
+
+@pytest.fixture(scope="function")
+def webp_image() -> BinaryIO:
+    """An image in webp format
+
+    :return: A file object that is safe to mutate.
+    """
+    return ImageType.WEBP.get_image()
+
+
+@pytest.fixture(scope="function")
+def png_image() -> BinaryIO:
+    """An image in png format
+
+    :return: A file object that is safe to mutate.
+    """
+    return ImageType.PNG.get_image()
 
 
 @pytest.fixture(scope="function")
@@ -165,7 +185,7 @@ def app_docker_container(request: FixtureRequest) -> Container:
     subprocess.check_output(
         f"docker build --tag {tag} .", shell=True, stderr=subprocess.STDOUT
     )
-    request.addfinalizer(lambda: client.images.get(tag).remove())
+    request.addfinalizer(lambda: client.images.get(tag).remove(force=True))
 
     volume_name = f"{settings.app_name}-acceptance-test"
     try:

@@ -59,27 +59,30 @@ class Worker(threading.Thread):
     def _do_task(self, job_id: str, image: BinaryIO) -> None:
         """Process the image and register the result with the task store.
 
-        If there is an Exception, it will be caught and sent to the task store
-        to manage.
+        If there is an Exception, it will be caught and error message
+        will be sent to the task store to be returned to the user
+        when they request their job status.
 
         :param job_id: Unique ID of the job being processed
         :param image: Binary image data to be converted to a thumbnail
         """
         err: Exception | None = None
+        message: str | None = None
 
         try:
             thumbnail = self._task_func(image)
-        except UnidentifiedImageError:
-            err = InvalidImage("file could not be identified as an image")
-        except Exception as e:
-            err = e
-        else:
             return self._task_store.register_task_complete(
                 job_id, thumbnail, settings.thumbnail_file_type
             )
+        except UnidentifiedImageError as e:
+            err = e
+            message = "File could not be identified as an image"
+        except Exception as e:
+            err = e
+            message = "There was an error converting your file to a thumbnail."
 
-        logger.exception(err)
-        self._task_store.register_task_error(job_id, err)
+        self._task_store.register_task_error(job_id, message)
+        raise err
 
     def run(self) -> None:
         """Worker logic. This is the loop the worker runs after starting.
@@ -110,7 +113,7 @@ class Worker(threading.Thread):
                 self._do_task(*task)
                 logger.debug(f"Finished task {task[0]}")
             except Exception as e:
-                logger.exception(e)
+                logger.exception(e, exc_info=True)
 
         self.interrupted = False
         logger.info("Thread interrupted -- shutting down")

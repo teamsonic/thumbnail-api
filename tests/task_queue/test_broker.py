@@ -8,54 +8,103 @@ from app.domain import create_thumbnail
 from app.exceptions import JobNotFound
 from app.task_queue import Broker, TaskStatus, Worker, task_store
 
-
-def test_broker_worker_interactions(
-    square_image: BinaryIO,
-    not_an_image: BinaryIO,
-    request: FixtureRequest,
-) -> None:
+@pytest.mark.e2e
+class TestFileSystemBrokerWorkerInteractions:
     """
-    Test all interactions with the broker, synchronously simulating
-    the behavior of the worker where necessary
+    Test that the broker and worker correctly communicate
+    with the task store and that the broker returns
+    the correct responses to job status.
+
+    The order of test methods in this class matter.
     """
-    request.addfinalizer(lambda: task_store.reset())
-    broker = Broker(task_store)
-    worker = Worker(task_store, create_thumbnail)
 
-    # assert the worker has no tasks
-    assert not worker._get_task()
+    completed_job_ids: list[str]
+    processing_job_ids: list[str]
+    failed_job_ids: list[str]
+    worker: Worker
+    broker: Broker
 
-    job_id = broker.add_task(square_image)
-    uuid.UUID(job_id)  # Assert job_id conforms to the UUID spec
+    @classmethod
+    def setup_class(cls) -> None:
+        task_store.reset()
+        cls.completed_job_ids = []
+        cls.processing_job_ids = []
+        cls.failed_job_ids = []
+        cls.broker = Broker(task_store)
+        cls.worker = Worker(task_store, create_thumbnail)
 
-    assert broker.task_status(job_id) == TaskStatus.PROCESSING
-    with pytest.raises(JobNotFound):
-        broker.get_result(job_id)  # Job has not completed yet
+    @classmethod
+    def teardown_class(cls) -> None:
+        task_store.reset()
 
-    task = worker._get_task()
-    assert task is not None
+    @pytest.mark.parametrize("image", ["square_image", "webp_image", "png_image"])
+    def test_broker_worker_interactions(
+        self,
+        image: str,
+        request: FixtureRequest,
+    ) -> None:
+        """
+        Test behavior when submitting supported image types
+        to the broker to be converted to a thumbnail.
+        """
+        # assert the worker has no tasks
+        assert not self.worker._get_task()
 
-    worker._do_task(*task)
-    assert broker.task_status(job_id) == TaskStatus.SUCCEEDED
+        image_fixture = request.getfixturevalue(image)
+        job_id = self.broker.add_task(image_fixture)
+        self.completed_job_ids.append(job_id)
+        uuid.UUID(job_id)  # Assert job_id conforms to the UUID spec
 
-    broker.get_result(job_id)  # No exception as task is succeeded now
+        assert self.broker.task_status(job_id) == TaskStatus.PROCESSING
+        with pytest.raises(JobNotFound):
+            self.broker.get_result(job_id)
 
-    # Expect an error when a non-image is provided
-    not_an_image_job_id = broker.add_task(not_an_image)
-    task = worker._get_task()
-    assert task is not None
-    worker._do_task(*task)
-    assert broker.task_status(not_an_image_job_id) == TaskStatus.ERROR
-    # Because this job failed, this call should return a message
-    assert broker.get_error_result(not_an_image_job_id)
+        task = self.worker._get_task()
+        assert task is not None
 
-    # Assert getting all results
-    processing_job_id = broker.add_task(square_image)
-    results = broker.get_all_results()
-    assert job_id in results[TaskStatus.SUCCEEDED]
-    assert not_an_image_job_id in results[TaskStatus.ERROR]
-    assert processing_job_id in results[TaskStatus.PROCESSING]
+        self.worker._do_task(*task)
+        assert self.broker.task_status(job_id) == TaskStatus.SUCCEEDED
 
-    # Assert an error when providing an ID that does not correspond to a job
-    with pytest.raises(JobNotFound):
-        broker.get_result(str(uuid.uuid4()))
+        # This will raise an Exception if there is no result to fetch.
+        self.broker.get_result(job_id)
+
+
+    def test_error(self, not_an_image: BinaryIO) -> None:
+        """
+        Test behavior when submitting an invalid file type, which
+        is that an error message should be returned and the task
+        should be placed in TaskStatus.ERROR state.
+
+        An Exception should be raised if a job status is requested
+        for a job that does not exist.
+        """
+        not_an_image_job_id = self.broker.add_task(not_an_image)
+        self.failed_job_ids.append(not_an_image_job_id)
+
+        task = self.worker._get_task()
+        assert task is not None
+        with pytest.raises(Exception):
+            self.worker._do_task(*task)
+
+        assert self.broker.task_status(not_an_image_job_id) == TaskStatus.ERROR
+        # Because this job failed, this call should return a message
+        assert self.broker.get_error_result(not_an_image_job_id)
+
+        # Assert an error when providing an ID that does not correspond to a job
+        with pytest.raises(JobNotFound):
+            self.broker.get_result(str(uuid.uuid4()))
+
+
+    def test_get_all_results(self, square_image: BinaryIO) -> None:
+        """
+        Test behavior when asking the broker for all job_ids.
+
+        This test builds on the previous two.
+        """
+        # Assert getting all results
+        processing_job_id = self.broker.add_task(square_image)
+        self.processing_job_ids.append(processing_job_id)
+        results = self.broker.get_all_results()
+        assert set(self.completed_job_ids) == set(results[TaskStatus.SUCCEEDED])
+        assert set(self.failed_job_ids) == set(results[TaskStatus.ERROR])
+        assert set(self.processing_job_ids) == set(results[TaskStatus.PROCESSING])

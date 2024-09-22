@@ -21,8 +21,6 @@
   kubectl --namespace {{ .Release.Namespace }} port-forward service/$SERVICE_NAME 8080:{{ .Values.service.port }}
 {{- end }}
 
-2. Access the interactive API documentation at `/docs` to upload images and create thumbnails.
-
-3. To view application logs:
+2. To view application logs:
 export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace}} -l "app.kubernetes.io/name={{ include "thumbnail-api.name" . }},app.kubernetes.io/instance={{ .Release.Name }},apps.kubernetes.io/pod-index=0" -o jsonpath="{.items[0].metadata.name}")
 kubectl --namespace {{ .Release.Namespace }} logs -f ${POD_NAME}

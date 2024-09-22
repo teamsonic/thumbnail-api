@@ -14,6 +14,7 @@ from app import settings
 from app.srv.events import lifespan
 from app.srv.handlers import (
     check_job_status_handler,
+    docs_redirect,
     download_thumbnail_handler,
     get_all_jobs_handler,
     healthcheck,
@@ -35,9 +36,11 @@ try:
     logger = logging.getLogger(__name__)
 except Exception as e:
     logger = logging.getLogger(__name__)
-    logger.exception(e)
+    logger.exception(e, exc_info=True)
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, docs_url=Routes.DOCS)
+
+app.get("/", include_in_schema=False)(docs_redirect)
 
 # Route -> Handler mappings
 app.get(

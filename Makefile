@@ -14,13 +14,13 @@ run: install-dependencies
 	poetry run fastapi dev $(Entrypoint)
 
 # Run all "not slow" tests from the path given by ${loc}. If ${loc} is not provided, the root folder is used.
-test: install-dependencies
-	poetry run pytest -m "not slow" $(loc)
+test tests: install-dependencies
+	poetry run pytest -v -m "not slow" $(loc)
 
 # Run all acceptance tests.
 test-acceptance: install-dependencies
 	@echo "Running acceptance tests. If docker has never built this application before, this could take a while"
-	poetry run pytest -m "acceptance" .
+	poetry run pytest -v -m "acceptance" .
 
 # Run all tests
 test-all: install-dependencies test-acceptance test

@@ -84,9 +84,14 @@ This make target will have Poetry sync your virtual environment with the depende
 and then launch the server, which will be reachable at http://127.0.0.1:8000.
 
 ### Creating Thumbnails
-Once the FastAPI server is running, you can access the interactive API docs at http://127.0.0.1:8000/docs and 
-use the `/upload_image` endpoint to submit an image to be converted to a thumbnail; the server will 
-begin processing the image and return a `job_id` associated with this task.
+Once the FastAPI server is running, you can access the interactive API docs at http://127.0.0.1:8000 and 
+use the `/upload_image` endpoint to submit an image to be converted to a thumbnail. 
+
+> Only JPG images are officially supported, and other file types -- especially those that are not images -- may be rejected
+by the server. Some image types, like PNG, can be made into a thumbnail, but you may notice visual issues
+that arise from converting the image to RGB mode. 
+ 
+The server will begin processing the image and return a `job_id` associated with this task.
 
 Using this `job_id`, make a request to the `/check_job_status/{job_id}` endpoint. If the job is complete,
 the thumbnail will be displayed. Otherwise, the current status of the job will be sent back, which can be
@@ -160,6 +165,8 @@ explain how you can view the application logs, which will be useful for monitori
 any errors that may arise during use.
 
 ## Limitations
+* Only JPG image formats are officially supported.
+* Thumbnail dimensions must always be square, even if it doesn't match the original image's aspect ratio.
 * FastAPI only runs on port 8000. This can be mitigated by Docker host-container port mapping or using a Kubernetes service as a proxy.
 * The app cannot be reliably horizontally scaled to handle increased load, as each application instance uses its own filesystem storage to manage thumbnail processing state. It's possible to mount the same PersistentVolume on multiple pods running this application -- allowing multiple Workers to process tasks from the queue simultaneously -- but the behavior is not tested and could result in multiple workers processing the same task, which would be self-defeating.
 * Relatedly, even if horizontal scaling was supported, because the application and the worker run within the same process, they cannot be scaled independently.
@@ -167,6 +174,7 @@ any errors that may arise during use.
 * The only supported task store type is the filesystem (no support for databases, key/value stores, etc.)
 * Healthcheck endpoint does not report on the operational status of the worker thread -- only if the API server is reachable and responsive. However, the worker thread's status is visible in the application logs.
 * Helm chart has no functioning tests to assert a healthy release.
+* Acceptance tests run in Docker don't count towards coverage %.
 
 ## Advanced Usage
 

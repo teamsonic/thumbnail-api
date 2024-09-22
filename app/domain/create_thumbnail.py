@@ -25,13 +25,11 @@ def create_thumbnail(image: BinaryIO) -> Image.Image:
     :param image: File-like interface to image binary data
     :return: A PIL Image.Image object representing the thumbnail
     """
-    pil_image = Image.open(image)
+    pil_image: Image.Image = Image.open(image)
     pil_image.thumbnail(settings.thumbnail_size)
-    return (
-        pil_image
-        if pil_image.size == settings.thumbnail_size
-        else _add_border_to_thumbnail(pil_image)
-    )
+    if pil_image.size != settings.thumbnail_size:
+        pil_image = _add_border_to_thumbnail(pil_image)
+    return pil_image.convert("RGB")
 
 
 def _add_border_to_thumbnail(thumbnail: Image.Image) -> Image.Image:

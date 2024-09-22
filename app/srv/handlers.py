@@ -5,7 +5,7 @@ See https://fastapi.tiangolo.com/tutorial/dependencies/
 """
 
 from fastapi import HTTPException, Request, Response, UploadFile, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 
 from app import settings
 from app.domain import (
@@ -26,6 +26,10 @@ async def healthcheck() -> dict[str, str]:
     :return: A dict of {"status": "healthy"}
     """
     return {"status": "healthy"}
+
+
+async def docs_redirect() -> RedirectResponse:
+    return RedirectResponse(url=Routes.DOCS)
 
 
 async def upload_image_handler(

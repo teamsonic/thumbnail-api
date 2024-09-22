@@ -17,6 +17,7 @@ from tests.specifications.adapters.http_client_driver import HTTPClientDriver
 @pytest.mark.slow
 @pytest.mark.acceptance
 @pytest.mark.e2e
+@pytest.mark.usefixtures("app_docker_container")
 class TestServer:
     """
     Test the application behavior end-to-end and verify
@@ -35,9 +36,18 @@ class TestServer:
         # corresponding job IDs will be added here.
         cls.job_ids = []
 
-    @pytest.mark.parametrize("image", ["square_image", "tall_image", "wide_image"])
-    def test_server(
-        self, app_docker_container: Container, image: str, request: FixtureRequest
+    @pytest.mark.parametrize("route", [Routes.HEALTHCHECK, Routes.DOCS, "/"])
+    def test_endpoints(self, route: str) -> None:
+        """Test endpoints that aren't interacted with during specification driven tests
+        """
+        http_client_driver = HTTPClientDriver()
+
+        response = http_client_driver.do_request('GET', route)
+        assert response.status_code == status.HTTP_200_OK
+
+    @pytest.mark.parametrize("image", ["square_image", "tall_image", "wide_image", "webp_image", "png_image"])
+    def test_thumbnail_creation_end_to_end(
+        self, image: str, request: FixtureRequest
     ) -> None:
         """Test the application behavior end-to-end.
 
@@ -45,7 +55,6 @@ class TestServer:
         application and use an HTTP driver to assert the system
         specifications via an HTTP interface.
 
-        :param app_docker_container: docker container running this application
         :param image: Name of pytest fixture that returns an image.
         :param request: pytest fixture that allows requesting other fixtures
             by name instead of by DI. This is done to enable parametrizing.
