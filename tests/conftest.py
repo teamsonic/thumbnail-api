@@ -13,6 +13,7 @@ from typing import BinaryIO
 import docker
 import pytest
 from _pytest.fixtures import FixtureRequest
+from docker.errors import NotFound
 from docker.models.containers import Container
 
 from app import settings
@@ -162,13 +163,18 @@ def app_docker_container(request: FixtureRequest) -> Container:
     # Hopefully support will be added soon.
     # See https://github.com/docker/docker-py/issues/2230
     subprocess.check_output(
-        f"docker build --tag {tag} .", shell=True, stderr=subprocess.STDOUT, timeout=60
+        f"docker build --tag {tag} .", shell=True, stderr=subprocess.STDOUT
     )
     request.addfinalizer(lambda: client.images.get(tag).remove())
 
     volume_name = f"{settings.app_name}-acceptance-test"
-    volume = client.volumes.get(volume_name)
-    volume.remove(force=True)
+    try:
+        volume = client.volumes.get(volume_name)
+    except NotFound:
+        pass
+    else:
+        volume.remove(force=True)
+
     container = client.containers.run(
         tag,
         ports={f"{settings.app_port}/tcp": settings.app_port},

@@ -19,11 +19,11 @@ test: install-dependencies
 
 # Run all acceptance tests.
 test-acceptance: install-dependencies
+	@echo "Running acceptance tests. If docker has never built this application before, this could take a while"
 	poetry run pytest -m "acceptance" .
 
 # Run all tests
-test-all: install-dependencies
-	poetry run pytest
+test-all: install-dependencies test-acceptance test
 
 # Run the ruff code formater
 format: install-dependencies

@@ -103,7 +103,9 @@ To run the acceptance tests, use:
 make test-acceptance
 ```
 Note that the acceptance tests create a Docker container running the application, so Docker will
-first need to be [installed](https://docs.docker.com/get-started/get-docker/) and running.
+first need to be [installed](https://docs.docker.com/get-started/get-docker/) and running. Furthermore, if
+docker has not built this application previous to running the acceptance tests it will need to download
+all the layers of the base image, which could cause the first run to take up to a minute or longer.
 
 To run everything at once, use:
 ```bash
@@ -150,8 +152,12 @@ If you are not using kind or want to customize the helm deployment, you'll need 
 adding the Docker image to one of your cluster's registries.
 
 ```bash
-helm install thumbnail-api helm-chart
+helm upgrade --install thumbnail-api helm-chart
 ```
+
+When the installation finishes Helm will instruct you on how to connect to the application. It will also
+explain how you can view the application logs, which will be useful for monitoring the application and troubleshooting
+any errors that may arise during use.
 
 ## Limitations
 * FastAPI only runs on port 8000. This can be mitigated by Docker host-container port mapping or using a Kubernetes service as a proxy.
@@ -160,6 +166,7 @@ helm install thumbnail-api helm-chart
 * Uploaded images and saved thumbnails do not have a retention policy associated with them, meaning eventually the application will run out of available space and start logging errors everytime an image is uploaded.
 * The only supported task store type is the filesystem (no support for databases, key/value stores, etc.)
 * Healthcheck endpoint does not report on the operational status of the worker thread -- only if the API server is reachable and responsive. However, the worker thread's status is visible in the application logs.
+* Helm chart has no functioning tests to assert a healthy release.
 
 ## Advanced Usage
 
